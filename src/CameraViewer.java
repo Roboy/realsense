@@ -1,4 +1,6 @@
 import intel.rssdk.*;
+import intel.rssdk.PXCMFaceData.Face;
+
 import javax.swing.*;
 
 import edu.wpi.rail.jrosbridge.*;
@@ -27,28 +29,53 @@ public class CameraViewer
 	public static void main(String s[])
 	{
 		// output where the "libpxcclr.jni64.dll" has to be copied to (at least in one of these paths)
-		System.out.println("Path: " + System.getProperty("java.library.path"));
+		//System.out.println("Path: " + System.getProperty("java.library.path"));
 
 		// load realsense library
 		System.loadLibrary("libpxcclr.jni64");
 
 		// connect to ROSbridge
+		System.out.println("Try to connect to ROSbridge");
 		ros  = new Ros(host);
 		ros.connect();
+		System.out.println("Connection established.");
+
 		// subscribe to a topic with name "/listener"
 		subscribeTopic("/listener", "std_msgs/String");
 
 		// get a PXCMSenseManager which is used for the connection to the Realsense
-		PXCMSenseManager senseMgr = PXCMSenseManager.CreateInstance();        
+		PXCMSenseManager senseMgr = PXCMSenseManager.CreateInstance(); 
 
 		// enabling the different provided streams
 		pxcmStatus sts = senseMgr.EnableStream(PXCMCapture.StreamType.STREAM_TYPE_COLOR, cWidth, cHeight);
 		sts = senseMgr.EnableStream(PXCMCapture.StreamType.STREAM_TYPE_DEPTH);
 
+		// enable face tracking
+		pxcmStatus statusFace = senseMgr.EnableFace(null);
+		if ( statusFace == pxcmStatus.PXCM_STATUS_NO_ERROR)
+			System.out.println("Status Face is fine");
+		else
+			System.out.println("Status: " + statusFace.toString());
+
+		PXCMFaceModule faceModule = senseMgr.QueryFace();
+		/*
+        // Retrieve the input requirements
+        PXCMFaceConfiguration faceConfig = faceModule.CreateActiveConfiguration();
+        faceConfig.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR);
+        faceConfig.detection.isEnabled = true; 
+        faceConfig.landmarks.isEnabled = true; 
+        faceConfig.pose.isEnabled = true;
+        //faceConfig.ApplyChanges();
+        faceConfig.detection.isEnabled = true; 
+        faceConfig.Update(); */
+
 		// initialize the manager
 		sts = senseMgr.Init();
 
 		System.out.println(sts);
+
+		// retrieve the face tracking results
+		PXCMFaceData faceData = faceModule.CreateOutput();
 
 		// initialize the capturing of the streams
 		PXCMCapture.Device device = senseMgr.QueryCaptureManager().QueryDevice();
@@ -83,16 +110,8 @@ public class CameraViewer
 			int counter = 0;
 			while (listener.exit == false)
 			{
-				counter++;
-				if (counter % 150 == 0)
-				{
-					// publish a topic to "/echo"
-					publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + host + counter + "\"}");
+				counter++;				
 
-					// calls a service from ROSbridge for adding two ints
-					callService("/add_two_ints", "rospy_tutorials/AddTwoInts", "{\"a\": 10, \"b\": 20}");
-				}
-				
 				// aquire one frame
 				sts = senseMgr.AcquireFrame(true);
 
@@ -100,6 +119,42 @@ public class CameraViewer
 				{
 					// get one sample from the camera
 					PXCMCapture.Sample sample = senseMgr.QuerySample();
+
+					faceModule=senseMgr.QueryFace();
+
+					faceData.Update();
+					if (faceModule != null)
+					{							
+						System.out.println("Faces: " + faceData.QueryNumberOfDetectedFaces());
+						if(faceData.QueryNumberOfDetectedFaces() > 0)
+						{
+							Face face = faceData.QueryFaceByIndex(0);
+							PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
+				              
+			                if (detectData != null)
+			                {
+			                    PXCMRectI32 rect = new PXCMRectI32();
+			                    boolean ret = detectData.QueryBoundingRect(rect);
+			                    if (ret) {
+			                        System.out.println("");
+			                        System.out.println ("Detection Rectangle at frame #" + counter); 
+			                        System.out.println ("Top Left corner: (" + rect.x + "," + rect.y + ")" ); 
+			                        System.out.println ("Height: " + rect.h + " Width: " + rect.w); 
+			                        
+			                        if (counter > 10)
+			        				{
+			        					// publish a topic to "/echo"
+			        					publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + rect.x + "," + rect.y + "\"}");
+
+			        					// calls a service from ROSbridge for adding two ints
+			        					//callService("/add_two_ints", "rospy_tutorials/AddTwoInts", "{\"a\": 10, \"b\": 20}");
+			        					
+			        					counter = 0;
+			        				}
+			                    }
+			                }
+						}
+					}
 
 					if (sample.color != null)
 					{
@@ -172,7 +227,7 @@ public class CameraViewer
 		cframe.dispose();
 		dframe.dispose();
 	}
-	
+
 	private static void publishTopic(String topic, String type, String message)
 	{
 		// publish a topic to "topic"
@@ -201,6 +256,76 @@ public class CameraViewer
 		ServiceResponse response = service.callServiceAndWait(request);
 		System.out.println(response.toString());
 	}
+
+	public static void _main(String s[]) throws java.io.IOException
+	{
+		PXCMSenseManager senseMgr = PXCMSenseManager.CreateInstance();
+
+		senseMgr.EnableFace(null);
+
+		PXCMFaceModule faceModule = senseMgr.QueryFace();
+
+		// Retrieve the input requirements
+		pxcmStatus sts = pxcmStatus.PXCM_STATUS_DATA_UNAVAILABLE; 
+		PXCMFaceConfiguration faceConfig = faceModule.CreateActiveConfiguration();
+		faceConfig.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR);
+		faceConfig.detection.isEnabled = true; 
+		faceConfig.landmarks.isEnabled = true; 
+		faceConfig.pose.isEnabled = true; 
+		faceConfig.ApplyChanges();
+		faceConfig.Update();
+
+		senseMgr.Init();
+
+		System.out.println("Start");
+		PXCMFaceData faceData = faceModule.CreateOutput();
+
+		for (int nframes=0; nframes<300000; nframes++)
+		{
+			senseMgr.AcquireFrame(true);
+
+			PXCMCapture.Sample sample = senseMgr.QueryFaceSample();
+
+			//faceData = faceModule.CreateOutput();
+			faceData.Update();
+
+			// Read and print data 
+			for (int fidx=0; ; fidx++) {
+				PXCMFaceData.Face face = faceData.QueryFaceByIndex(fidx);
+				if (face==null) break;
+				PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
+
+				if (detectData != null)
+				{
+					PXCMRectI32 rect = new PXCMRectI32();
+					boolean ret = detectData.QueryBoundingRect(rect);
+					if (ret) {
+						System.out.println("");
+						System.out.println ("Detection Rectangle at frame #" + nframes); 
+						System.out.println ("Top Left corner: (" + rect.x + "," + rect.y + ")" ); 
+						System.out.println ("Height: " + rect.h + " Width: " + rect.w); 
+					}
+				} else 
+					break;
+
+				PXCMFaceData.PoseData poseData = face.QueryPose();
+				if (poseData != null)
+				{
+					PXCMFaceData.PoseEulerAngles pea = new PXCMFaceData.PoseEulerAngles();
+					poseData.QueryPoseAngles(pea);
+					System.out.println ("Pose Data at frame #" + nframes); 
+					System.out.println ("(Roll, Yaw, Pitch) = (" + pea.roll + "," + pea.yaw + "," + pea.pitch + ")"); 
+				}  
+			}  
+
+			//faceData.close();
+			senseMgr.ReleaseFrame();
+		}
+		faceData.close();
+		senseMgr.Close();
+		System.exit(0);
+		System.out.println("End");
+	} 
 }
 
 class Listener extends WindowAdapter {

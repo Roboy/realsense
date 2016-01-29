@@ -1,6 +1,7 @@
 import intel.rssdk.*;
 import intel.rssdk.PXCMFaceData.Face;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import edu.wpi.rail.jrosbridge.*;
@@ -11,6 +12,13 @@ import edu.wpi.rail.jrosbridge.services.ServiceResponse;
 
 import java.awt.event.*;
 import java.awt.image.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
 import java.awt.*;
 
 public class CameraViewer
@@ -19,12 +27,14 @@ public class CameraViewer
 	 * change "host" to the IP from your linux machine
 	 * Enter: "ifconfig" in a terminal in linux and search for "eth0". Use the "inet addr"!!
 	 */
-	static String host = "10.183.20.136";
+	static String host = "10.183.16.47";
 	static int cWidth  = 640;
 	static int cHeight = 480;
 	static int dWidth, dHeight;
 	static boolean exit = false;
 	static Ros ros;
+
+	static boolean useROS = false;
 
 	public static void main(String s[])
 	{
@@ -34,14 +44,19 @@ public class CameraViewer
 		// load realsense library
 		System.loadLibrary("libpxcclr.jni64");
 
-		// connect to ROSbridge
-		System.out.println("Try to connect to ROSbridge");
-		ros  = new Ros(host);
-		ros.connect();
-		System.out.println("Connection established.");
+		if(useROS)
+		{
+			// connect to ROSbridge
+			System.out.println("Try to connect to ROSbridge");
+			ros  = new Ros(host);
+			ros.connect();
+			System.out.println("Connection established.");
 
-		// subscribe to a topic with name "/listener"
-		subscribeTopic("/listener", "std_msgs/String");
+			// subscribe to a topic with name "/listener"
+			subscribeTopic("/listener", "std_msgs/String");
+		}
+		else
+			System.out.println("ROSbridge is turned off");
 
 		// get a PXCMSenseManager which is used for the connection to the Realsense
 		PXCMSenseManager senseMgr = PXCMSenseManager.CreateInstance(); 
@@ -58,16 +73,6 @@ public class CameraViewer
 			System.out.println("Status: " + statusFace.toString());
 
 		PXCMFaceModule faceModule = senseMgr.QueryFace();
-		/*
-        // Retrieve the input requirements
-        PXCMFaceConfiguration faceConfig = faceModule.CreateActiveConfiguration();
-        faceConfig.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR);
-        faceConfig.detection.isEnabled = true; 
-        faceConfig.landmarks.isEnabled = true; 
-        faceConfig.pose.isEnabled = true;
-        //faceConfig.ApplyChanges();
-        faceConfig.detection.isEnabled = true; 
-        faceConfig.Update(); */
 
 		// initialize the manager
 		sts = senseMgr.Init();
@@ -130,29 +135,32 @@ public class CameraViewer
 						{
 							Face face = faceData.QueryFaceByIndex(0);
 							PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
-				              
-			                if (detectData != null)
-			                {
-			                    PXCMRectI32 rect = new PXCMRectI32();
-			                    boolean ret = detectData.QueryBoundingRect(rect);
-			                    if (ret) {
-			                        System.out.println("");
-			                        System.out.println ("Detection Rectangle at frame #" + counter); 
-			                        System.out.println ("Top Left corner: (" + rect.x + "," + rect.y + ")" ); 
-			                        System.out.println ("Height: " + rect.h + " Width: " + rect.w); 
-			                        
-			                        if (counter > 10)
-			        				{
-			        					// publish a topic to "/echo"
-			        					publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + rect.x + "," + rect.y + "\"}");
 
-			        					// calls a service from ROSbridge for adding two ints
-			        					//callService("/add_two_ints", "rospy_tutorials/AddTwoInts", "{\"a\": 10, \"b\": 20}");
-			        					
-			        					counter = 0;
-			        				}
-			                    }
-			                }
+							if (detectData != null)
+							{
+								PXCMRectI32 rect = new PXCMRectI32();
+								boolean ret = detectData.QueryBoundingRect(rect);
+								if (ret) {
+									System.out.println("");
+									System.out.println ("Detection Rectangle at frame #" + counter); 
+									System.out.println ("Top Left corner: (" + rect.x + "," + rect.y + ")" ); 
+									System.out.println ("Height: " + rect.h + " Width: " + rect.w); 
+
+									if(useROS)
+									{
+										if (counter > 10)
+										{
+											// publish a topic to "/echo"
+											publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + rect.x + "," + rect.y + "\"}");
+
+											// calls a service from ROSbridge for adding two ints
+											//callService("/add_two_ints", "rospy_tutorials/AddTwoInts", "{\"a\": 10, \"b\": 20}");
+
+											counter = 0;
+										}
+									}
+								}
+							}
 						}
 					}
 
@@ -169,8 +177,11 @@ public class CameraViewer
 
 						int cBuff[] = new int[cData.pitches[0]/4 * cHeight];
 
+						//sendImage();
+
 						cData.ToIntArray(0, cBuff);
 						c_df.image.setRGB (0, 0, cWidth, cHeight, cBuff, 0, cData.pitches[0]/4);
+						sendImage2(c_df.image);
 						c_df.repaint();  
 						sts = sample.color.ReleaseAccess(cData);
 
@@ -222,10 +233,88 @@ public class CameraViewer
 			System.out.println("Failed to initialize");
 		}
 
-		// disconnets from ROS
-		ros.disconnect();
+		if(useROS)
+		{
+			// disconnets from ROS
+			ros.disconnect();
+		}
 		cframe.dispose();
 		dframe.dispose();
+	}
+
+	private static void sendImage() {
+		BufferedImage bimg;
+		int port = 6066;
+		//String host = "10.183.20.136";
+		try
+		{
+			System.out.println("Connecting to " + host
+					+ " on port " + port);
+			Socket client = new Socket(host, port);
+
+			System.out.println("Just connected to "
+					+ client.getRemoteSocketAddress());
+
+			DataInputStream in=new DataInputStream(client.getInputStream());
+			System.out.println(in.readUTF());
+			System.out.println(in.readUTF());
+
+			DataOutputStream out =
+					new DataOutputStream(client.getOutputStream());
+
+			out.writeUTF("Hello from "
+					+ client.getLocalSocketAddress());
+			out.writeUTF("client: hello to server");
+
+			bimg = ImageIO.read(new File("C:\\Users\\Roboy\\Pictures\\Saved Pictures\\download.jpg"));
+
+			ImageIO.write(bimg,"JPG",client.getOutputStream());
+			System.out.println("Image sent!!!!");
+			client.close();
+		}catch(IOException e)
+		{
+			e.printStackTrace();
+		}		
+	}
+
+	private static void sendImage2(BufferedImage bimg) {
+
+		int port = 6066;
+		//String host = "10.183.20.136";
+		try
+		{
+			Socket client = new Socket(host, port);
+
+			DataInputStream in=new DataInputStream(client.getInputStream());
+			System.out.println(in.readUTF());
+			System.out.println(in.readUTF());
+
+			DataOutputStream out = new DataOutputStream(client.getOutputStream());
+
+			out.writeUTF("Hello from " + client.getLocalSocketAddress());
+			out.writeUTF("client: hello to server");
+
+			if(bimg == null)
+				System.out.println("Image is null");
+			else
+			{
+				ImageIO.write(bimg,"JPG",client.getOutputStream());
+				System.out.println("Image sent!!!!");
+			}
+			client.close();
+		}catch(IOException e)
+		{
+			e.printStackTrace();
+		}		
+	}
+
+	private static BufferedImage createImageFromBytes(byte[] imageData) {
+		ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
+		try {
+			return ImageIO.read(bais);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private static void publishTopic(String topic, String type, String message)

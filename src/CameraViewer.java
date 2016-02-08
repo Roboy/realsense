@@ -16,6 +16,10 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
@@ -33,10 +37,11 @@ public class CameraViewer
 	static int dWidth, dHeight;
 	static boolean exit = false;
 	static Ros ros;
+	static PXCMRectI32 lastFaceRect;
 
 	static boolean useROS = false;
 
-	public static void main(String s[])
+	public static void main(String s[]) throws FileNotFoundException, IOException
 	{
 		// output where the "libpxcclr.jni64.dll" has to be copied to (at least in one of these paths)
 		//System.out.println("Path: " + System.getProperty("java.library.path"));
@@ -74,9 +79,64 @@ public class CameraViewer
 
 		PXCMFaceModule faceModule = senseMgr.QueryFace();
 
+		PXCMFaceConfiguration faceConf = faceModule.CreateActiveConfiguration();
+		faceConf.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR_PLUS_DEPTH);
+		PXCMFaceConfiguration.RecognitionConfiguration recognitionConf = faceConf.QueryRecognition();
+
+		// Enable face recognition
+		recognitionConf.Enable();
+
+		// Create a recognition database
+		PXCMFaceConfiguration.RecognitionConfiguration.RecognitionStorageDesc desc = new PXCMFaceConfiguration.RecognitionConfiguration.RecognitionStorageDesc();
+		desc.maxUsers = 10;
+		pxcmStatus storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
+		System.out.println("Status 1: " + storageStatus);
+		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
+		System.out.println("Status 1: " + storageStatus);
+		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
+		System.out.println("Status 1: " + storageStatus);
+		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
+		System.out.println("Status 1: " + storageStatus);
+		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
+		System.out.println("Status 1: " + storageStatus);
+		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
+		System.out.println("Status 2: " + storageStatus);
+		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
+		System.out.println("Status 2: " + storageStatus);
+		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
+		System.out.println("Status 2: " + storageStatus);
+		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
+		System.out.println("Status 2: " + storageStatus);
+		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
+		System.out.println("Status 2: " + storageStatus);
+		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
+		System.out.println("Status 2: " + storageStatus);
+		
+		// load database
+		File databaseFile = new File("roboydb.txt");
+		if (databaseFile.exists())
+		{
+			FileInputStream fis = new FileInputStream(databaseFile);
+			byte[] buffer = new byte[fis.available()];
+			fis.read(buffer);
+			recognitionConf.SetDatabaseBuffer(buffer, buffer.length);
+			System.out.println("Database loaded!");
+		}
+		else
+		{
+			System.out.println("Database could not be found!");
+		}
+
+		// Set the registration mode
+		recognitionConf.SetRegistrationMode(PXCMFaceConfiguration.RecognitionConfiguration.RecognitionRegistrationMode.REGISTRATION_MODE_CONTINUOUS);
+
+		faceConf.EnableAllAlerts();
+		// Make it effective
+		//faceConf.ApplyChanges();
+
 		// initialize the manager
 		sts = senseMgr.Init();
-
+		
 		System.out.println(sts);
 
 		// retrieve the face tracking results
@@ -130,38 +190,66 @@ public class CameraViewer
 					faceData.Update();
 					if (faceModule != null)
 					{							
-						System.out.println("Faces: " + faceData.QueryNumberOfDetectedFaces());
-						if(faceData.QueryNumberOfDetectedFaces() > 0)
+						int nfaces = faceData.QueryNumberOfDetectedFaces();
+						System.out.println("Faces: " + nfaces);
+						if(nfaces > 0)
 						{
-							Face face = faceData.QueryFaceByIndex(0);
-							PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
+							for (int i = 0 ; i < nfaces ; i++)
+							{							   
+								Face face = faceData.QueryFaceByIndex(0);
+								PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
+								PXCMFaceData.RecognitionData recognitionData = face.QueryRecognition();
 
-							if (detectData != null)
-							{
-								PXCMRectI32 rect = new PXCMRectI32();
-								boolean ret = detectData.QueryBoundingRect(rect);
-								if (ret) {
-									System.out.println("");
-									System.out.println ("Detection Rectangle at frame #" + counter); 
-									System.out.println ("Top Left corner: (" + rect.x + "," + rect.y + ")" ); 
-									System.out.println ("Height: " + rect.h + " Width: " + rect.w); 
+								System.out.println("recognitionData" + recognitionData.toString());
 
-									if(useROS)
-									{
-										if (counter > 10)
+								// recognize the current face?
+								int userId = recognitionData.QueryUserID();
+								if (userId >= 0) {
+									System.out.println("UserId: " + userId);
+								}
+								System.out.println("Id: " + userId);
+								if(!recognitionData.IsRegistered())
+								{	
+									recognitionData.RegisterUser();
+									System.out.println("New UserId: " + recognitionData.RegisterUser());
+								}
+								else
+									System.out.println("User is already registered");
+
+								if(recognitionData.IsRegistered())
+								{	
+									System.out.println("Is registered");
+								}
+
+								if (detectData != null)
+								{
+									lastFaceRect = new PXCMRectI32();
+									boolean ret = detectData.QueryBoundingRect(lastFaceRect);
+									if (ret) {
+										System.out.println("");
+										System.out.println ("Detection Rectangle at frame #" + counter); 
+										System.out.println ("Top Left corner: (" + lastFaceRect.x + "," + lastFaceRect.y + ")" ); 
+										System.out.println ("Height: " + lastFaceRect.h + " Width: " + lastFaceRect.w); 
+
+										if(useROS)
 										{
-											// publish a topic to "/echo"
-											publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + rect.x + "," + rect.y + "\"}");
+											if (counter > 10)
+											{
+												// publish a topic to "/echo"
+												publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + lastFaceRect.x + "," + lastFaceRect.y + "\"}");
 
-											// calls a service from ROSbridge for adding two ints
-											//callService("/add_two_ints", "rospy_tutorials/AddTwoInts", "{\"a\": 10, \"b\": 20}");
+												// calls a service from ROSbridge for adding two ints
+												//callService("/add_two_ints", "rospy_tutorials/AddTwoInts", "{\"a\": 10, \"b\": 20}");
 
-											counter = 0;
+												counter = 0;
+											}
 										}
 									}
 								}
-							}
+							}														
 						}
+						else
+							lastFaceRect = null;
 					}
 
 					if (sample.color != null)
@@ -171,23 +259,27 @@ public class CameraViewer
 						sts = sample.color.AcquireAccess(PXCMImage.Access.ACCESS_READ,PXCMImage.PixelFormat.PIXEL_FORMAT_RGB32, cData);
 						if (sts.compareTo(pxcmStatus.PXCM_STATUS_NO_ERROR) < 0)
 						{
-							System.out.println ("Failed to AcquireAccess of color image data");
+							System.out.println ("Failed to Acquire Access of color image data " + sts);
 							System.exit(3);
 						}
 
 						int cBuff[] = new int[cData.pitches[0]/4 * cHeight];
 
-						//sendImage();
-
 						cData.ToIntArray(0, cBuff);
 						c_df.image.setRGB (0, 0, cWidth, cHeight, cBuff, 0, cData.pitches[0]/4);
-						sendImage2(c_df.image);
+
+						drawFaceRect(lastFaceRect, c_df.image);
+
+						//send image to linux
+						if(useROS)
+							sendImage2(c_df.image);
+
 						c_df.repaint();  
 						sts = sample.color.ReleaseAccess(cData);
 
 						if (sts.compareTo(pxcmStatus.PXCM_STATUS_NO_ERROR)<0)
 						{
-							System.out.println ("Failed to ReleaseAccess of color image data");
+							System.out.println ("Failed to Release Access of color image data");
 							System.exit(3);
 						}
 					}
@@ -199,7 +291,7 @@ public class CameraViewer
 						sample.depth.AcquireAccess(PXCMImage.Access.ACCESS_READ,PXCMImage.PixelFormat.PIXEL_FORMAT_RGB32, dData);
 						if (sts.compareTo(pxcmStatus.PXCM_STATUS_NO_ERROR)<0)
 						{
-							System.out.println ("Failed to AcquireAccess of depth image data");
+							System.out.println ("Failed to Acquire Access of depth image data");
 							System.exit(3);
 						}
 
@@ -210,14 +302,14 @@ public class CameraViewer
 						sts = sample.depth.ReleaseAccess(dData);
 						if (sts.compareTo(pxcmStatus.PXCM_STATUS_NO_ERROR)<0)
 						{
-							System.out.println ("Failed to ReleaseAccess of depth image data");
+							System.out.println ("Failed to Release Access of depth image data");
 							System.exit(3);
 						}
 					}  
 				}
 				else
 				{
-					System.out.println("Failed to acquire frame");
+					System.out.println("Failed to acquire frame: " + sts);
 				}
 
 				// release actual frame
@@ -238,8 +330,58 @@ public class CameraViewer
 			// disconnets from ROS
 			ros.disconnect();
 		}
+		
+		PXCMFaceData recData = faceModule.CreateOutput();
+
+		// allocate the buffer to save the database
+		PXCMFaceData.RecognitionModuleData rmd=recData.QueryRecognitionModule();
+		int nbytes=rmd.QueryDatabaseSize();
+		byte[] buffer=new byte[nbytes];
+
+		// retrieve the database buffer
+		rmd.QueryDatabaseBuffer(buffer);
+
+		// Save the buffer to a file
+		FileOutputStream fos;
+		try {
+			File file = new File("roboydb.txt");
+			fos = new FileOutputStream(file);
+			fos.write(buffer);
+			fos.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+		// Now load the database buffer back.
+		recognitionConf.SetDatabaseBuffer(buffer,nbytes);
+		
 		cframe.dispose();
 		dframe.dispose();
+	}
+
+	private static void drawFaceRect(PXCMRectI32 rect, BufferedImage image) {
+		if(rect != null)
+		{
+			int x = rect.x;
+			int y = rect.y;
+			if(cHeight > y+rect.w && cWidth > x+rect.h)
+			{
+				for(int h = 0 ; h < rect.h; h++)
+				{
+					image.setRGB(x+h, y, 128);
+					image.setRGB(x+h, y+rect.w, 128);
+				}
+				for(int w = 0 ; w < rect.w; w++)
+				{
+					image.setRGB(x, y+w, 128);
+					image.setRGB(x+rect.h, y+w, 128);
+				}
+			}
+		}
 	}
 
 	private static void sendImage() {

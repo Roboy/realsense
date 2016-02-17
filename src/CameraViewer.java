@@ -23,6 +23,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.awt.*;
 
 public class CameraViewer
@@ -34,10 +35,13 @@ public class CameraViewer
 	static String host = "10.183.16.47";
 	static int cWidth  = 640;
 	static int cHeight = 480;
+	static double vfov = 43;
+	static double hfov = 70;
 	static int dWidth, dHeight;
 	static boolean exit = false;
 	static Ros ros;
-	static PXCMRectI32 lastFaceRect;
+	static PXCMRectI32 faceRect;
+	static ArrayList<PXCMRectI32> lastFaceRect;
 
 	static boolean useROS = false;
 
@@ -66,6 +70,8 @@ public class CameraViewer
 		// get a PXCMSenseManager which is used for the connection to the Realsense
 		PXCMSenseManager senseMgr = PXCMSenseManager.CreateInstance(); 
 
+		if(senseMgr == null)
+			System.out.println("is null");
 		// enabling the different provided streams
 		pxcmStatus sts = senseMgr.EnableStream(PXCMCapture.StreamType.STREAM_TYPE_COLOR, cWidth, cHeight);
 		sts = senseMgr.EnableStream(PXCMCapture.StreamType.STREAM_TYPE_DEPTH);
@@ -81,39 +87,27 @@ public class CameraViewer
 
 		PXCMFaceConfiguration faceConf = faceModule.CreateActiveConfiguration();
 		faceConf.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR_PLUS_DEPTH);
+		//faceConf.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR);
 		PXCMFaceConfiguration.RecognitionConfiguration recognitionConf = faceConf.QueryRecognition();
 
 		// Enable face recognition
 		recognitionConf.Enable();
 
+		faceConf.EnableAllAlerts();
+
 		// Create a recognition database
 		PXCMFaceConfiguration.RecognitionConfiguration.RecognitionStorageDesc desc = new PXCMFaceConfiguration.RecognitionConfiguration.RecognitionStorageDesc();
 		desc.maxUsers = 10;
+		
+		/*
 		pxcmStatus storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
 		System.out.println("Status 1: " + storageStatus);
-		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
-		System.out.println("Status 1: " + storageStatus);
-		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
-		System.out.println("Status 1: " + storageStatus);
-		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
-		System.out.println("Status 1: " + storageStatus);
-		storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
-		System.out.println("Status 1: " + storageStatus);
 		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
 		System.out.println("Status 2: " + storageStatus);
-		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
-		System.out.println("Status 2: " + storageStatus);
-		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
-		System.out.println("Status 2: " + storageStatus);
-		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
-		System.out.println("Status 2: " + storageStatus);
-		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
-		System.out.println("Status 2: " + storageStatus);
-		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
-		System.out.println("Status 2: " + storageStatus);
-		
+		*/
+		/*
 		// load database
-		File databaseFile = new File("roboydb.txt");
+		File databaseFile = new File("roboy.txt");
 		if (databaseFile.exists())
 		{
 			FileInputStream fis = new FileInputStream(databaseFile);
@@ -126,21 +120,32 @@ public class CameraViewer
 		{
 			System.out.println("Database could not be found!");
 		}
+		 */
+
 
 		// Set the registration mode
-		recognitionConf.SetRegistrationMode(PXCMFaceConfiguration.RecognitionConfiguration.RecognitionRegistrationMode.REGISTRATION_MODE_CONTINUOUS);
+		recognitionConf.SetRegistrationMode(PXCMFaceConfiguration.RecognitionConfiguration.RecognitionRegistrationMode.REGISTRATION_MODE_ON_DEMAND);
 
-		faceConf.EnableAllAlerts();
+
+		/*
 		// Make it effective
-		//faceConf.ApplyChanges();
-
-		// initialize the manager
-		sts = senseMgr.Init();
-		
-		System.out.println(sts);
+		statusFace = faceConf.ApplyChanges();
+		if ( statusFace == pxcmStatus.PXCM_STATUS_NO_ERROR)
+			System.out.println("Apply changes worked");
+		else
+			System.out.println("Apply changes failed with: " + statusFace.toString());
+		 */
 
 		// retrieve the face tracking results
 		PXCMFaceData faceData = faceModule.CreateOutput();
+
+		// initialize the manager
+		sts = senseMgr.Init();
+
+
+		System.out.println(sts);
+
+
 
 		// initialize the capturing of the streams
 		PXCMCapture.Device device = senseMgr.QueryCaptureManager().QueryDevice();
@@ -170,12 +175,15 @@ public class CameraViewer
 		dframe.add(d_df);
 		dframe.setVisible(true); 
 
+		lastFaceRect = new ArrayList<PXCMRectI32>();
+
 		if (sts == pxcmStatus.PXCM_STATUS_NO_ERROR)
 		{
 			int counter = 0;
 			while (listener.exit == false)
 			{
-				counter++;				
+				counter++;
+				lastFaceRect.clear();
 
 				// aquire one frame
 				sts = senseMgr.AcquireFrame(true);
@@ -195,8 +203,8 @@ public class CameraViewer
 						if(nfaces > 0)
 						{
 							for (int i = 0 ; i < nfaces ; i++)
-							{							   
-								Face face = faceData.QueryFaceByIndex(0);
+							{				
+								Face face = faceData.QueryFaceByIndex(i);
 								PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
 								PXCMFaceData.RecognitionData recognitionData = face.QueryRecognition();
 
@@ -223,21 +231,24 @@ public class CameraViewer
 
 								if (detectData != null)
 								{
-									lastFaceRect = new PXCMRectI32();
-									boolean ret = detectData.QueryBoundingRect(lastFaceRect);
-									if (ret) {
+									faceRect = new PXCMRectI32();
+									boolean success = detectData.QueryBoundingRect(faceRect);
+									
+									if(i == 0)
+										calculateRelativePosition(faceRect);
+									
+									if (success) {
 										System.out.println("");
 										System.out.println ("Detection Rectangle at frame #" + counter); 
-										System.out.println ("Top Left corner: (" + lastFaceRect.x + "," + lastFaceRect.y + ")" ); 
-										System.out.println ("Height: " + lastFaceRect.h + " Width: " + lastFaceRect.w); 
+										System.out.println ("Top Left corner: (" + faceRect.x + "," + faceRect.y + ")" ); 
+										System.out.println ("Height: " + faceRect.h + " Width: " + faceRect.w); 
 
 										if(useROS)
 										{
 											if (counter > 10)
 											{
 												// publish a topic to "/echo"
-												publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + lastFaceRect.x + "," + lastFaceRect.y + "\"}");
-
+												publishTopic("/echo", "std_msgs/String", "{\"data\": \"" + faceRect.x + "," + faceRect.y + "\"}");
 												// calls a service from ROSbridge for adding two ints
 												//callService("/add_two_ints", "rospy_tutorials/AddTwoInts", "{\"a\": 10, \"b\": 20}");
 
@@ -245,11 +256,10 @@ public class CameraViewer
 											}
 										}
 									}
+									lastFaceRect.add(faceRect);
 								}
 							}														
 						}
-						else
-							lastFaceRect = null;
 					}
 
 					if (sample.color != null)
@@ -268,11 +278,12 @@ public class CameraViewer
 						cData.ToIntArray(0, cBuff);
 						c_df.image.setRGB (0, 0, cWidth, cHeight, cBuff, 0, cData.pitches[0]/4);
 
-						drawFaceRect(lastFaceRect, c_df.image);
+						if(lastFaceRect != null && !lastFaceRect.isEmpty())
+							drawFaces(lastFaceRect, c_df.image);
 
 						//send image to linux
 						if(useROS)
-							sendImage2(c_df.image);
+							sendImage(c_df.image);
 
 						c_df.repaint();  
 						sts = sample.color.ReleaseAccess(cData);
@@ -330,7 +341,8 @@ public class CameraViewer
 			// disconnets from ROS
 			ros.disconnect();
 		}
-		
+
+		/*
 		PXCMFaceData recData = faceModule.CreateOutput();
 
 		// allocate the buffer to save the database
@@ -355,36 +367,45 @@ public class CameraViewer
 			e.printStackTrace();
 		}
 
-
 		// Now load the database buffer back.
 		recognitionConf.SetDatabaseBuffer(buffer,nbytes);
-		
+		 */
+
 		cframe.dispose();
 		dframe.dispose();
 	}
 
-	private static void drawFaceRect(PXCMRectI32 rect, BufferedImage image) {
-		if(rect != null)
+	private static void drawFaces(ArrayList<PXCMRectI32> faces, BufferedImage image) {
+		System.out.println("Start drawing");
+		if(faces != null)
 		{
-			int x = rect.x;
-			int y = rect.y;
-			if(cHeight > y+rect.w && cWidth > x+rect.h)
-			{
-				for(int h = 0 ; h < rect.h; h++)
+			for (PXCMRectI32 rect: faces) {
+				int color = new Color(0,255,0).getRGB(); //-1189453;
+				//int[] color2 = {255, 255, 255};
+				int x = rect.x;
+				int y = rect.y;
+				if(cHeight > y+rect.w && cWidth > x+rect.h)
 				{
-					image.setRGB(x+h, y, 128);
-					image.setRGB(x+h, y+rect.w, 128);
+					for(int h = 0 ; h < rect.h; h++)
+					{
+						image.setRGB(x+h, y, color);
+						//image.setRGB(x+h, y+rect.w, color);
+						image.setRGB(x+h, y+rect.w, color);
+						//System.out.println("Color: " + image.getRGB(0, 0));
+					}
+					for(int w = 0 ; w < rect.w; w++)
+					{
+						image.setRGB(x, y+w, color);
+						image.setRGB(x+rect.h, y+w, color);
+					}
 				}
-				for(int w = 0 ; w < rect.w; w++)
-				{
-					image.setRGB(x, y+w, 128);
-					image.setRGB(x+rect.h, y+w, 128);
-				}
+				System.out.println("X: " + x + " Y: " + y);
 			}
 		}
+		System.out.println("End drawing");
 	}
 
-	private static void sendImage() {
+	private static void sendImage3() {
 		BufferedImage bimg;
 		int port = 6066;
 		//String host = "10.183.20.136";
@@ -419,7 +440,7 @@ public class CameraViewer
 		}		
 	}
 
-	private static void sendImage2(BufferedImage bimg) {
+	private static void sendImage(BufferedImage bimg) {
 
 		int port = 6066;
 		//String host = "10.183.20.136";
@@ -459,6 +480,21 @@ public class CameraViewer
 		}
 	}
 
+	private static void calculateRelativePosition(PXCMRectI32 faceBox) {
+
+		double width = (double)cWidth;
+		double height = (double)cHeight;
+		double faceWidth = (double)faceBox.w;
+		double faceHeight = (double)faceBox.h;
+		double faceX = (double)faceBox.x;
+		double faceY = (double)faceBox.y;
+		double azimuth = (hfov/2) * (faceX + faceWidth/2 - width/2)/(width/2);
+		double elevation = - (vfov/2) * (faceY + faceHeight/2 - height/2)/(height/2);
+		
+		System.out.println("Azimuth: "  + azimuth);
+		System.out.println("Elevation: "  + elevation);
+	}
+	
 	private static void publishTopic(String topic, String type, String message)
 	{
 		// publish a topic to "topic"

@@ -1,0 +1,205 @@
+\hypertarget{class_camera_viewer}{}\section{Camera\+Viewer Class Reference}
+\label{class_camera_viewer}\index{Camera\+Viewer@{Camera\+Viewer}}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \hyperlink{class_camera_viewer_adf55f83b4c0f8fde5ed17930f9b982d2}{main} (String s\mbox{[}$\,$\mbox{]})  throws File\+Not\+Found\+Exception, I\+O\+Exception, Interrupted\+Exception 	
+\item 
+static void \hyperlink{class_camera_viewer_a919f756424f1b490c9aa36d36e193e5e}{draw\+Faces} (Array\+List$<$ P\+X\+C\+M\+Rect\+I32 $>$ faces, Buffered\+Image image)
+\item 
+static void \hyperlink{class_camera_viewer_ae238a779883f977dbbda0940bc5a3878}{send\+Image} (Buffered\+Image bimg)
+\item 
+static Buffered\+Image \hyperlink{class_camera_viewer_a6e22dd4f0040cd4b4a22b0f798a543ed}{create\+Image\+From\+Bytes} (byte\mbox{[}$\,$\mbox{]} image\+Data)
+\item 
+static void \hyperlink{class_camera_viewer_a8cb2f58e42efefc07b937d4995e36fb5}{calculate\+Relative\+Position} (P\+X\+C\+M\+Rect\+I32 face\+Box)
+\item 
+static void \hyperlink{class_camera_viewer_a0aa5f46d01dc041485e0f5d68bb3af99}{publish\+Topic} (String topic, String type, String message)
+\item 
+static void \hyperlink{class_camera_viewer_a53e220f2df68b4491868035b1da2878d}{subscribe\+Topic} (String topic, String type)
+\item 
+static void \hyperlink{class_camera_viewer_abc264bdcd61579567fa4d0f52c1ad59e}{call\+Service} (String service\+Name, String destination, String request\+Msg)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static String \hyperlink{class_camera_viewer_ae3aa04f2442f86d016ac36ec1826f602}{host} = \char`\"{}10.\+183.\+16.\+47\char`\"{}
+\item 
+static int \hyperlink{class_camera_viewer_a8d9edb173e94f793e357f75110536d2a}{c\+Width} = 640
+\item 
+static int \hyperlink{class_camera_viewer_af02b7d67aab1dc9cabf2a878fb8a0f85}{c\+Height} = 480
+\item 
+static double \hyperlink{class_camera_viewer_a767dac9c7706ba964760627c663196be}{vfov} = 43
+\item 
+static double \hyperlink{class_camera_viewer_acc21e91b5db8c8166f18507a357210b3}{hfov} = 70
+\item 
+static int \hyperlink{class_camera_viewer_aded50825f5d1ea9c745c75a55e4a105d}{d\+Width}
+\item 
+static boolean \hyperlink{class_camera_viewer_a1de16e85ab6c251bb6af54bdecf99f03}{exit} = false
+\item 
+static Ros \hyperlink{class_camera_viewer_a03084cede72b21c8d4c3be7653f0ea9d}{ros}
+\item 
+static P\+X\+C\+M\+Rect\+I32 \hyperlink{class_camera_viewer_a9fd124ff0771b5037aebfac55a49cc74}{face\+Rect}
+\item 
+static Array\+List$<$ P\+X\+C\+M\+Rect\+I32 $>$ \hyperlink{class_camera_viewer_a4bc05c51ad1bc21023c7a8b5faf2edc6}{last\+Face\+Rect}
+\item 
+static boolean \hyperlink{class_camera_viewer_a5435323d8b24dad1767ef81de2a72d60}{do\+Register} = true
+\item 
+static boolean \hyperlink{class_camera_viewer_a5925c6ab3f43232f9c4e1a2e5c4b2623}{use\+R\+OS} = false
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This class provides everything to use the Realsense camera on the Windows machine and to connect to R\+OS via a R\+O\+Sbridge \begin{DoxyAuthor}{Author}
+Lucas Weidner 
+\end{DoxyAuthor}
+
+
+\subsection{Member Function Documentation}
+\index{Camera\+Viewer@{Camera\+Viewer}!calculate\+Relative\+Position@{calculate\+Relative\+Position}}
+\index{calculate\+Relative\+Position@{calculate\+Relative\+Position}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{calculate\+Relative\+Position(\+P\+X\+C\+M\+Rect\+I32 face\+Box)}{calculateRelativePosition(PXCMRectI32 faceBox)}}]{\setlength{\rightskip}{0pt plus 5cm}static void Camera\+Viewer.\+calculate\+Relative\+Position (
+\begin{DoxyParamCaption}
+\item[{P\+X\+C\+M\+Rect\+I32}]{face\+Box}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a8cb2f58e42efefc07b937d4995e36fb5}{}\label{class_camera_viewer_a8cb2f58e42efefc07b937d4995e36fb5}
+Calculate the relative position of the face (in 3D) to Roboy 
+\begin{DoxyParams}{Parameters}
+{\em face\+Box} & the face position in the image \\
+\hline
+\end{DoxyParams}
+\index{Camera\+Viewer@{Camera\+Viewer}!call\+Service@{call\+Service}}
+\index{call\+Service@{call\+Service}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{call\+Service(\+String service\+Name, String destination, String request\+Msg)}{callService(String serviceName, String destination, String requestMsg)}}]{\setlength{\rightskip}{0pt plus 5cm}static void Camera\+Viewer.\+call\+Service (
+\begin{DoxyParamCaption}
+\item[{String}]{service\+Name, }
+\item[{String}]{destination, }
+\item[{String}]{request\+Msg}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_abc264bdcd61579567fa4d0f52c1ad59e}{}\label{class_camera_viewer_abc264bdcd61579567fa4d0f52c1ad59e}
+Call R\+OS service 
+\begin{DoxyParams}{Parameters}
+{\em service\+Name} & \\
+\hline
+{\em destination} & \\
+\hline
+{\em request\+Msg} & \\
+\hline
+\end{DoxyParams}
+\index{Camera\+Viewer@{Camera\+Viewer}!create\+Image\+From\+Bytes@{create\+Image\+From\+Bytes}}
+\index{create\+Image\+From\+Bytes@{create\+Image\+From\+Bytes}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{create\+Image\+From\+Bytes(byte[] image\+Data)}{createImageFromBytes(byte[] imageData)}}]{\setlength{\rightskip}{0pt plus 5cm}static Buffered\+Image Camera\+Viewer.\+create\+Image\+From\+Bytes (
+\begin{DoxyParamCaption}
+\item[{byte\mbox{[}$\,$\mbox{]}}]{image\+Data}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a6e22dd4f0040cd4b4a22b0f798a543ed}{}\label{class_camera_viewer_a6e22dd4f0040cd4b4a22b0f798a543ed}
+\index{Camera\+Viewer@{Camera\+Viewer}!draw\+Faces@{draw\+Faces}}
+\index{draw\+Faces@{draw\+Faces}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{draw\+Faces(\+Array\+List$<$ P\+X\+C\+M\+Rect\+I32 $>$ faces, Buffered\+Image image)}{drawFaces(ArrayList< PXCMRectI32 > faces, BufferedImage image)}}]{\setlength{\rightskip}{0pt plus 5cm}static void Camera\+Viewer.\+draw\+Faces (
+\begin{DoxyParamCaption}
+\item[{Array\+List$<$ P\+X\+C\+M\+Rect\+I32 $>$}]{faces, }
+\item[{Buffered\+Image}]{image}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a919f756424f1b490c9aa36d36e193e5e}{}\label{class_camera_viewer_a919f756424f1b490c9aa36d36e193e5e}
+Draw faces inside the color stream window to show the detected faces 
+\begin{DoxyParams}{Parameters}
+{\em faces} & array of all detected faces \\
+\hline
+{\em image} & color image from the stream \\
+\hline
+\end{DoxyParams}
+for each face in the arraylist draw a rectangular around the face in the image\index{Camera\+Viewer@{Camera\+Viewer}!main@{main}}
+\index{main@{main}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{main(\+String s[])}{main(String s[])}}]{\setlength{\rightskip}{0pt plus 5cm}static void Camera\+Viewer.\+main (
+\begin{DoxyParamCaption}
+\item[{String}]{s\mbox{[}$\,$\mbox{]}}
+\end{DoxyParamCaption}
+) throws File\+Not\+Found\+Exception, I\+O\+Exception, Interrupted\+Exception\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_adf55f83b4c0f8fde5ed17930f9b982d2}{}\label{class_camera_viewer_adf55f83b4c0f8fde5ed17930f9b982d2}
+Main method which will be executed and which holds all the code \index{Camera\+Viewer@{Camera\+Viewer}!publish\+Topic@{publish\+Topic}}
+\index{publish\+Topic@{publish\+Topic}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{publish\+Topic(\+String topic, String type, String message)}{publishTopic(String topic, String type, String message)}}]{\setlength{\rightskip}{0pt plus 5cm}static void Camera\+Viewer.\+publish\+Topic (
+\begin{DoxyParamCaption}
+\item[{String}]{topic, }
+\item[{String}]{type, }
+\item[{String}]{message}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a0aa5f46d01dc041485e0f5d68bb3af99}{}\label{class_camera_viewer_a0aa5f46d01dc041485e0f5d68bb3af99}
+Publishs the message under the specified topic to the R\+O\+Sbridge 
+\begin{DoxyParams}{Parameters}
+{\em topic} & R\+OS topic \\
+\hline
+{\em type} & R\+OS type \\
+\hline
+{\em message} & message to send \\
+\hline
+\end{DoxyParams}
+\index{Camera\+Viewer@{Camera\+Viewer}!send\+Image@{send\+Image}}
+\index{send\+Image@{send\+Image}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{send\+Image(\+Buffered\+Image bimg)}{sendImage(BufferedImage bimg)}}]{\setlength{\rightskip}{0pt plus 5cm}static void Camera\+Viewer.\+send\+Image (
+\begin{DoxyParamCaption}
+\item[{Buffered\+Image}]{bimg}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_ae238a779883f977dbbda0940bc5a3878}{}\label{class_camera_viewer_ae238a779883f977dbbda0940bc5a3878}
+Send image to R\+OS via the R\+O\+Sbridge 
+\begin{DoxyParams}{Parameters}
+{\em bimg} & Image to send to R\+OS \\
+\hline
+\end{DoxyParams}
+\index{Camera\+Viewer@{Camera\+Viewer}!subscribe\+Topic@{subscribe\+Topic}}
+\index{subscribe\+Topic@{subscribe\+Topic}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{subscribe\+Topic(\+String topic, String type)}{subscribeTopic(String topic, String type)}}]{\setlength{\rightskip}{0pt plus 5cm}static void Camera\+Viewer.\+subscribe\+Topic (
+\begin{DoxyParamCaption}
+\item[{String}]{topic, }
+\item[{String}]{type}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a53e220f2df68b4491868035b1da2878d}{}\label{class_camera_viewer_a53e220f2df68b4491868035b1da2878d}
+Subscribes to topics from R\+OS 
+\begin{DoxyParams}{Parameters}
+{\em topic} & topic to subscribe to \\
+\hline
+{\em type} & type of the message \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Data Documentation}
+\index{Camera\+Viewer@{Camera\+Viewer}!c\+Height@{c\+Height}}
+\index{c\+Height@{c\+Height}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{c\+Height}{cHeight}}]{\setlength{\rightskip}{0pt plus 5cm}int Camera\+Viewer.\+c\+Height = 480\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_af02b7d67aab1dc9cabf2a878fb8a0f85}{}\label{class_camera_viewer_af02b7d67aab1dc9cabf2a878fb8a0f85}
+height of the color stream \index{Camera\+Viewer@{Camera\+Viewer}!c\+Width@{c\+Width}}
+\index{c\+Width@{c\+Width}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{c\+Width}{cWidth}}]{\setlength{\rightskip}{0pt plus 5cm}int Camera\+Viewer.\+c\+Width = 640\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a8d9edb173e94f793e357f75110536d2a}{}\label{class_camera_viewer_a8d9edb173e94f793e357f75110536d2a}
+width of the color stream \index{Camera\+Viewer@{Camera\+Viewer}!do\+Register@{do\+Register}}
+\index{do\+Register@{do\+Register}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{do\+Register}{doRegister}}]{\setlength{\rightskip}{0pt plus 5cm}boolean Camera\+Viewer.\+do\+Register = true\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a5435323d8b24dad1767ef81de2a72d60}{}\label{class_camera_viewer_a5435323d8b24dad1767ef81de2a72d60}
+variable for checking if the actual face should get registered in the database (at the moment, face recognition does not work, so it is useless) \index{Camera\+Viewer@{Camera\+Viewer}!d\+Width@{d\+Width}}
+\index{d\+Width@{d\+Width}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{d\+Width}{dWidth}}]{\setlength{\rightskip}{0pt plus 5cm}int Camera\+Viewer.\+d\+Width\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_aded50825f5d1ea9c745c75a55e4a105d}{}\label{class_camera_viewer_aded50825f5d1ea9c745c75a55e4a105d}
+width and height of the depth stream \index{Camera\+Viewer@{Camera\+Viewer}!exit@{exit}}
+\index{exit@{exit}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{exit}{exit}}]{\setlength{\rightskip}{0pt plus 5cm}boolean Camera\+Viewer.\+exit = false\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a1de16e85ab6c251bb6af54bdecf99f03}{}\label{class_camera_viewer_a1de16e85ab6c251bb6af54bdecf99f03}
+variable to check, if the program should end \index{Camera\+Viewer@{Camera\+Viewer}!face\+Rect@{face\+Rect}}
+\index{face\+Rect@{face\+Rect}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{face\+Rect}{faceRect}}]{\setlength{\rightskip}{0pt plus 5cm}P\+X\+C\+M\+Rect\+I32 Camera\+Viewer.\+face\+Rect\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a9fd124ff0771b5037aebfac55a49cc74}{}\label{class_camera_viewer_a9fd124ff0771b5037aebfac55a49cc74}
+rectangular with the face data \index{Camera\+Viewer@{Camera\+Viewer}!hfov@{hfov}}
+\index{hfov@{hfov}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{hfov}{hfov}}]{\setlength{\rightskip}{0pt plus 5cm}double Camera\+Viewer.\+hfov = 70\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_acc21e91b5db8c8166f18507a357210b3}{}\label{class_camera_viewer_acc21e91b5db8c8166f18507a357210b3}
+horizontal field of view of the realsense \index{Camera\+Viewer@{Camera\+Viewer}!host@{host}}
+\index{host@{host}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{host}{host}}]{\setlength{\rightskip}{0pt plus 5cm}String Camera\+Viewer.\+host = \char`\"{}10.\+183.\+16.\+47\char`\"{}\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_ae3aa04f2442f86d016ac36ec1826f602}{}\label{class_camera_viewer_ae3aa04f2442f86d016ac36ec1826f602}
+Cchange \char`\"{}host\char`\"{} to the IP from your linux machine Enter\+: \char`\"{}ifconfig\char`\"{} in a terminal in linux and search for \char`\"{}eth0\char`\"{}. Use the \char`\"{}inet addr\char`\"{}!! \index{Camera\+Viewer@{Camera\+Viewer}!last\+Face\+Rect@{last\+Face\+Rect}}
+\index{last\+Face\+Rect@{last\+Face\+Rect}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{last\+Face\+Rect}{lastFaceRect}}]{\setlength{\rightskip}{0pt plus 5cm}Array\+List$<$P\+X\+C\+M\+Rect\+I32$>$ Camera\+Viewer.\+last\+Face\+Rect\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a4bc05c51ad1bc21023c7a8b5faf2edc6}{}\label{class_camera_viewer_a4bc05c51ad1bc21023c7a8b5faf2edc6}
+array of all faces from the actual frame \index{Camera\+Viewer@{Camera\+Viewer}!ros@{ros}}
+\index{ros@{ros}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{ros}{ros}}]{\setlength{\rightskip}{0pt plus 5cm}Ros Camera\+Viewer.\+ros\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a03084cede72b21c8d4c3be7653f0ea9d}{}\label{class_camera_viewer_a03084cede72b21c8d4c3be7653f0ea9d}
+R\+O\+Sbridge \index{Camera\+Viewer@{Camera\+Viewer}!use\+R\+OS@{use\+R\+OS}}
+\index{use\+R\+OS@{use\+R\+OS}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{use\+R\+OS}{useROS}}]{\setlength{\rightskip}{0pt plus 5cm}boolean Camera\+Viewer.\+use\+R\+OS = false\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a5925c6ab3f43232f9c4e1a2e5c4b2623}{}\label{class_camera_viewer_a5925c6ab3f43232f9c4e1a2e5c4b2623}
+for debugging purposes\+: if true, the program will connect to linux via R\+O\+Sbridge \index{Camera\+Viewer@{Camera\+Viewer}!vfov@{vfov}}
+\index{vfov@{vfov}!Camera\+Viewer@{Camera\+Viewer}}
+\subsubsection[{\texorpdfstring{vfov}{vfov}}]{\setlength{\rightskip}{0pt plus 5cm}double Camera\+Viewer.\+vfov = 43\hspace{0.3cm}{\ttfamily [static]}}\hypertarget{class_camera_viewer_a767dac9c7706ba964760627c663196be}{}\label{class_camera_viewer_a767dac9c7706ba964760627c663196be}
+vertical field of view of the realsense 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+C\+:/\+Users/\+Roboy/\+Documents/\+Realsense/roboy-\/realsense/src/\hyperlink{_camera_viewer_8java}{Camera\+Viewer.\+java}\end{DoxyCompactItemize}

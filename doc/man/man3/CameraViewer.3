@@ -1,0 +1,188 @@
+.TH "CameraViewer" 3 "Wed Apr 6 2016" "Version 1.0" "Realsense" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+CameraViewer \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Static Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "static void \fBmain\fP (String s[])  throws FileNotFoundException, IOException, InterruptedException 	"
+.br
+.ti -1c
+.RI "static void \fBdrawFaces\fP (ArrayList< PXCMRectI32 > faces, BufferedImage image)"
+.br
+.ti -1c
+.RI "static void \fBsendImage\fP (BufferedImage bimg)"
+.br
+.ti -1c
+.RI "static BufferedImage \fBcreateImageFromBytes\fP (byte[] imageData)"
+.br
+.ti -1c
+.RI "static void \fBcalculateRelativePosition\fP (PXCMRectI32 faceBox)"
+.br
+.ti -1c
+.RI "static void \fBpublishTopic\fP (String topic, String type, String message)"
+.br
+.ti -1c
+.RI "static void \fBsubscribeTopic\fP (String topic, String type)"
+.br
+.ti -1c
+.RI "static void \fBcallService\fP (String serviceName, String destination, String requestMsg)"
+.br
+.in -1c
+.SS "Static Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "static String \fBhost\fP = '10\&.183\&.16\&.47'"
+.br
+.ti -1c
+.RI "static int \fBcWidth\fP = 640"
+.br
+.ti -1c
+.RI "static int \fBcHeight\fP = 480"
+.br
+.ti -1c
+.RI "static double \fBvfov\fP = 43"
+.br
+.ti -1c
+.RI "static double \fBhfov\fP = 70"
+.br
+.ti -1c
+.RI "static int \fBdWidth\fP"
+.br
+.ti -1c
+.RI "static boolean \fBexit\fP = false"
+.br
+.ti -1c
+.RI "static Ros \fBros\fP"
+.br
+.ti -1c
+.RI "static PXCMRectI32 \fBfaceRect\fP"
+.br
+.ti -1c
+.RI "static ArrayList< PXCMRectI32 > \fBlastFaceRect\fP"
+.br
+.ti -1c
+.RI "static boolean \fBdoRegister\fP = true"
+.br
+.ti -1c
+.RI "static boolean \fBuseROS\fP = false"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This class provides everything to use the Realsense camera on the Windows machine and to connect to ROS via a ROSbridge 
+.PP
+\fBAuthor:\fP
+.RS 4
+Lucas Weidner 
+.RE
+.PP
+
+.SH "Member Function Documentation"
+.PP 
+.SS "static void CameraViewer\&.calculateRelativePosition (PXCMRectI32 faceBox)\fC [static]\fP"
+Calculate the relative position of the face (in 3D) to Roboy 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfaceBox\fP the face position in the image 
+.RE
+.PP
+
+.SS "static void CameraViewer\&.callService (String serviceName, String destination, String requestMsg)\fC [static]\fP"
+Call ROS service 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIserviceName\fP 
+.br
+\fIdestination\fP 
+.br
+\fIrequestMsg\fP 
+.RE
+.PP
+
+.SS "static BufferedImage CameraViewer\&.createImageFromBytes (byte[] imageData)\fC [static]\fP"
+
+.SS "static void CameraViewer\&.drawFaces (ArrayList< PXCMRectI32 > faces, BufferedImage image)\fC [static]\fP"
+Draw faces inside the color stream window to show the detected faces 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfaces\fP array of all detected faces 
+.br
+\fIimage\fP color image from the stream 
+.RE
+.PP
+for each face in the arraylist draw a rectangular around the face in the image
+.SS "static void CameraViewer\&.main (String s[]) throws FileNotFoundException, IOException, InterruptedException\fC [static]\fP"
+Main method which will be executed and which holds all the code 
+.SS "static void CameraViewer\&.publishTopic (String topic, String type, String message)\fC [static]\fP"
+Publishs the message under the specified topic to the ROSbridge 
+.PP
+\fBParameters:\fP
+.RS 4
+\fItopic\fP ROS topic 
+.br
+\fItype\fP ROS type 
+.br
+\fImessage\fP message to send 
+.RE
+.PP
+
+.SS "static void CameraViewer\&.sendImage (BufferedImage bimg)\fC [static]\fP"
+Send image to ROS via the ROSbridge 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbimg\fP Image to send to ROS 
+.RE
+.PP
+
+.SS "static void CameraViewer\&.subscribeTopic (String topic, String type)\fC [static]\fP"
+Subscribes to topics from ROS 
+.PP
+\fBParameters:\fP
+.RS 4
+\fItopic\fP topic to subscribe to 
+.br
+\fItype\fP type of the message 
+.RE
+.PP
+
+.SH "Member Data Documentation"
+.PP 
+.SS "int CameraViewer\&.cHeight = 480\fC [static]\fP"
+height of the color stream 
+.SS "int CameraViewer\&.cWidth = 640\fC [static]\fP"
+width of the color stream 
+.SS "boolean CameraViewer\&.doRegister = true\fC [static]\fP"
+variable for checking if the actual face should get registered in the database (at the moment, face recognition does not work, so it is useless) 
+.SS "int CameraViewer\&.dWidth\fC [static]\fP"
+width and height of the depth stream 
+.SS "boolean CameraViewer\&.exit = false\fC [static]\fP"
+variable to check, if the program should end 
+.SS "PXCMRectI32 CameraViewer\&.faceRect\fC [static]\fP"
+rectangular with the face data 
+.SS "double CameraViewer\&.hfov = 70\fC [static]\fP"
+horizontal field of view of the realsense 
+.SS "String CameraViewer\&.host = '10\&.183\&.16\&.47'\fC [static]\fP"
+Cchange 'host' to the IP from your linux machine Enter: 'ifconfig' in a terminal in linux and search for 'eth0'\&. Use the 'inet addr'!! 
+.SS "ArrayList<PXCMRectI32> CameraViewer\&.lastFaceRect\fC [static]\fP"
+array of all faces from the actual frame 
+.SS "Ros CameraViewer\&.ros\fC [static]\fP"
+ROSbridge 
+.SS "boolean CameraViewer\&.useROS = false\fC [static]\fP"
+for debugging purposes: if true, the program will connect to linux via ROSbridge 
+.SS "double CameraViewer\&.vfov = 43\fC [static]\fP"
+vertical field of view of the realsense 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Realsense from the source code\&.

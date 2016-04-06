@@ -16,36 +16,85 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.awt.*;
 
+/**
+ * This class provides everything to use the Realsense camera on the Windows machine and to connect to ROS via a ROSbridge
+ * @author Lucas Weidner
+ *
+ */
 public class CameraViewer
 {    
-	/*
-	 * change "host" to the IP from your linux machine
+	/**
+	 * Cchange "host" to the IP from your linux machine
 	 * Enter: "ifconfig" in a terminal in linux and search for "eth0". Use the "inet addr"!!
 	 */
-	static String host = "10.183.16.47";
-	static int cWidth  = 640;
-	static int cHeight = 480;
-	static double vfov = 43;
-	static double hfov = 70;
-	static int dWidth, dHeight;
-	static boolean exit = false;
-	static Ros ros;
-	static PXCMRectI32 faceRect;
-	static ArrayList<PXCMRectI32> lastFaceRect;
+	public static String host = "10.183.16.47";
+	
+	/**
+	 * width of the color stream 
+	 */
+	public static int cWidth  = 640;
+	
+	/**
+	 * height of the color stream
+	 */
+	public static int cHeight = 480;
+	
+	/**
+	 * vertical field of view of the realsense
+	 */
+	public static double vfov = 43;
+	
+	/**
+	 * horizontal field of view of the realsense
+	 */
+	public static double hfov = 70;
+	
+	/**
+	 * width and height of the depth stream
+	 */
+	public static int dWidth, dHeight;
+	
+	/**
+	 * variable to check, if the program should end
+	 */
+	public static boolean exit = false;
+	
+	/**
+	 * ROSbridge
+	 */
+	public static Ros ros;
+	
+	/**
+	 * rectangular with the face data
+	 */
+	public static PXCMRectI32 faceRect;
+	
+	/**
+	 * array of all faces from the actual frame
+	 */
+	public static ArrayList<PXCMRectI32> lastFaceRect;
+	
+	/**
+	 * variable for checking if the actual face should get registered in the database
+	 * (at the moment, face recognition does not work, so it is useless)
+	 */
+	public static boolean doRegister = true; 
 
-	static boolean useROS = false;
+	/**
+	 * for debugging purposes: if true, the program will connect to linux via ROSbridge
+	 */
+	public static boolean useROS = false;
 
-	public static void main(String s[]) throws FileNotFoundException, IOException
+	/**
+	 * Main method which will be executed and which holds all the code
+	 */
+	public static void main(String s[]) throws FileNotFoundException, IOException, InterruptedException
 	{
 		// output where the "libpxcclr.jni64.dll" has to be copied to (at least in one of these paths)
 		//System.out.println("Path: " + System.getProperty("java.library.path"));
@@ -87,24 +136,20 @@ public class CameraViewer
 
 		PXCMFaceConfiguration faceConf = faceModule.CreateActiveConfiguration();
 		faceConf.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR_PLUS_DEPTH);
-		//faceConf.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR);
-		PXCMFaceConfiguration.RecognitionConfiguration recognitionConf = faceConf.QueryRecognition();
 
+		PXCMFaceConfiguration.RecognitionConfiguration recognitionConf = faceConf.QueryRecognition();
 		// Enable face recognition
 		recognitionConf.Enable();
-
-		faceConf.EnableAllAlerts();
 
 		// Create a recognition database
 		PXCMFaceConfiguration.RecognitionConfiguration.RecognitionStorageDesc desc = new PXCMFaceConfiguration.RecognitionConfiguration.RecognitionStorageDesc();
 		desc.maxUsers = 10;
-		
 		/*
 		pxcmStatus storageStatus = recognitionConf.CreateStorage("RoboyDB.txt", desc);
 		System.out.println("Status 1: " + storageStatus);
 		storageStatus = recognitionConf.UseStorage("RoboyDB.txt");
 		System.out.println("Status 2: " + storageStatus);
-		*/
+		 */
 		/*
 		// load database
 		File databaseFile = new File("roboy.txt");
@@ -127,31 +172,27 @@ public class CameraViewer
 		recognitionConf.SetRegistrationMode(PXCMFaceConfiguration.RecognitionConfiguration.RecognitionRegistrationMode.REGISTRATION_MODE_ON_DEMAND);
 
 
-		/*
 		// Make it effective
 		statusFace = faceConf.ApplyChanges();
 		if ( statusFace == pxcmStatus.PXCM_STATUS_NO_ERROR)
 			System.out.println("Apply changes worked");
 		else
 			System.out.println("Apply changes failed with: " + statusFace.toString());
-		 */
-
-		// retrieve the face tracking results
-		PXCMFaceData faceData = faceModule.CreateOutput();
 
 		// initialize the manager
 		sts = senseMgr.Init();
 
-
-		System.out.println(sts);
-
-
+		// retrieve the face tracking results
+		PXCMFaceData faceData = faceModule.CreateOutput();
 
 		// initialize the capturing of the streams
 		PXCMCapture.Device device = senseMgr.QueryCaptureManager().QueryDevice();
 		PXCMCapture.Device.StreamProfileSet profiles = new PXCMCapture.Device.StreamProfileSet();
 		device.QueryStreamProfileSet(profiles);
 
+		//faceConf.close();
+		//faceModule.close();
+		
 		dWidth = profiles.depth.imageInfo.width;
 		dHeight = profiles.depth.imageInfo.height;
 
@@ -208,35 +249,33 @@ public class CameraViewer
 								PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
 								PXCMFaceData.RecognitionData recognitionData = face.QueryRecognition();
 
-								System.out.println("recognitionData" + recognitionData.toString());
-
 								// recognize the current face?
 								int userId = recognitionData.QueryUserID();
-								if (userId >= 0) {
-									System.out.println("UserId: " + userId);
-								}
 								System.out.println("Id: " + userId);
+
 								if(!recognitionData.IsRegistered())
 								{	
-									recognitionData.RegisterUser();
-									System.out.println("New UserId: " + recognitionData.RegisterUser());
+									if (doRegister)
+									{
+										recognitionData.RegisterUser();
+										doRegister = false;
+									}
+									else
+									{
+										System.out.println("Unrecognized");
+									}
 								}
 								else
-									System.out.println("User is already registered");
-
-								if(recognitionData.IsRegistered())
-								{	
 									System.out.println("Is registered");
-								}
 
 								if (detectData != null)
 								{
 									faceRect = new PXCMRectI32();
 									boolean success = detectData.QueryBoundingRect(faceRect);
-									
-									if(i == 0)
+
+									if(i == 0)	// calculate relative position to first face
 										calculateRelativePosition(faceRect);
-									
+
 									if (success) {
 										System.out.println("");
 										System.out.println ("Detection Rectangle at frame #" + counter); 
@@ -342,43 +381,21 @@ public class CameraViewer
 			ros.disconnect();
 		}
 
-		/*
-		PXCMFaceData recData = faceModule.CreateOutput();
-
-		// allocate the buffer to save the database
-		PXCMFaceData.RecognitionModuleData rmd=recData.QueryRecognitionModule();
-		int nbytes=rmd.QueryDatabaseSize();
-		byte[] buffer=new byte[nbytes];
-
-		// retrieve the database buffer
-		rmd.QueryDatabaseBuffer(buffer);
-
-		// Save the buffer to a file
-		FileOutputStream fos;
-		try {
-			File file = new File("roboydb.txt");
-			fos = new FileOutputStream(file);
-			fos.write(buffer);
-			fos.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// Now load the database buffer back.
-		recognitionConf.SetDatabaseBuffer(buffer,nbytes);
-		 */
-
 		cframe.dispose();
 		dframe.dispose();
 	}
 
-	private static void drawFaces(ArrayList<PXCMRectI32> faces, BufferedImage image) {
-		System.out.println("Start drawing");
+	/**
+	 * Draw faces inside the color stream window to show the detected faces
+	 * @param faces array of all detected faces
+	 * @param image color image from the stream
+	 */
+	public static void drawFaces(ArrayList<PXCMRectI32> faces, BufferedImage image) {
 		if(faces != null)
 		{
+			/**
+			 * for each face in the arraylist draw a rectangular around the face in the image
+			 */
 			for (PXCMRectI32 rect: faces) {
 				int color = new Color(0,255,0).getRGB(); //-1189453;
 				//int[] color2 = {255, 255, 255};
@@ -402,56 +419,27 @@ public class CameraViewer
 				System.out.println("X: " + x + " Y: " + y);
 			}
 		}
-		System.out.println("End drawing");
 	}
 
-	private static void sendImage3() {
-		BufferedImage bimg;
+	/**
+	 * Send image to ROS via the ROSbridge
+	 * @param bimg Image to send to ROS
+	 */
+	public static void sendImage(BufferedImage bimg) {
+		//port for IP
 		int port = 6066;
 		//String host = "10.183.20.136";
 		try
 		{
-			System.out.println("Connecting to " + host
-					+ " on port " + port);
+			// socket to Linux
 			Socket client = new Socket(host, port);
 
-			System.out.println("Just connected to "
-					+ client.getRemoteSocketAddress());
-
+			// input stream from Linux to receive data
 			DataInputStream in=new DataInputStream(client.getInputStream());
 			System.out.println(in.readUTF());
 			System.out.println(in.readUTF());
 
-			DataOutputStream out =
-					new DataOutputStream(client.getOutputStream());
-
-			out.writeUTF("Hello from "
-					+ client.getLocalSocketAddress());
-			out.writeUTF("client: hello to server");
-
-			bimg = ImageIO.read(new File("C:\\Users\\Roboy\\Pictures\\Saved Pictures\\download.jpg"));
-
-			ImageIO.write(bimg,"JPG",client.getOutputStream());
-			System.out.println("Image sent!!!!");
-			client.close();
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-		}		
-	}
-
-	private static void sendImage(BufferedImage bimg) {
-
-		int port = 6066;
-		//String host = "10.183.20.136";
-		try
-		{
-			Socket client = new Socket(host, port);
-
-			DataInputStream in=new DataInputStream(client.getInputStream());
-			System.out.println(in.readUTF());
-			System.out.println(in.readUTF());
-
+			// output stream to Linux
 			DataOutputStream out = new DataOutputStream(client.getOutputStream());
 
 			out.writeUTF("Hello from " + client.getLocalSocketAddress());
@@ -461,9 +449,11 @@ public class CameraViewer
 				System.out.println("Image is null");
 			else
 			{
+				// send image via the output stream
 				ImageIO.write(bimg,"JPG",client.getOutputStream());
 				System.out.println("Image sent!!!!");
 			}
+			// close the stream
 			client.close();
 		}catch(IOException e)
 		{
@@ -471,7 +461,7 @@ public class CameraViewer
 		}		
 	}
 
-	private static BufferedImage createImageFromBytes(byte[] imageData) {
+	public static BufferedImage createImageFromBytes(byte[] imageData) {
 		ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
 		try {
 			return ImageIO.read(bais);
@@ -480,7 +470,11 @@ public class CameraViewer
 		}
 	}
 
-	private static void calculateRelativePosition(PXCMRectI32 faceBox) {
+	/**
+	 * Calculate the relative position of the face (in 3D) to Roboy  
+	 * @param faceBox the face position in the image
+	 */
+	public static void calculateRelativePosition(PXCMRectI32 faceBox) {
 
 		double width = (double)cWidth;
 		double height = (double)cHeight;
@@ -490,12 +484,18 @@ public class CameraViewer
 		double faceY = (double)faceBox.y;
 		double azimuth = (hfov/2) * (faceX + faceWidth/2 - width/2)/(width/2);
 		double elevation = - (vfov/2) * (faceY + faceHeight/2 - height/2)/(height/2);
-		
+
 		System.out.println("Azimuth: "  + azimuth);
 		System.out.println("Elevation: "  + elevation);
 	}
-	
-	private static void publishTopic(String topic, String type, String message)
+
+	/**
+	 * Publishs the message under the specified topic to the ROSbridge
+	 * @param topic ROS topic
+	 * @param type ROS type
+	 * @param message message to send
+	 */
+	public static void publishTopic(String topic, String type, String message)
 	{
 		// publish a topic to "topic"
 		Topic echo = new Topic(ros, topic, type);
@@ -503,7 +503,12 @@ public class CameraViewer
 		echo.publish(toSend);
 	}
 
-	private static void subscribeTopic(String topic, String type)
+	/**
+	 * Subscribes to topics from ROS
+	 * @param topic topic to subscribe to
+	 * @param type type of the message
+	 */
+	public static void subscribeTopic(String topic, String type)
 	{
 		// subscribe to a topic with name "topic"
 		Topic echoBack = new Topic(ros, topic, type);
@@ -514,7 +519,13 @@ public class CameraViewer
 		});
 	}
 
-	private static void callService(String serviceName, String destination, String requestMsg)
+	/**
+	 * Call ROS service
+	 * @param serviceName
+	 * @param destination
+	 * @param requestMsg
+	 */
+	public static void callService(String serviceName, String destination, String requestMsg)
 	{
 		// calls a service from ROSbridge
 		Service service = new Service(ros, serviceName, destination);
@@ -523,78 +534,13 @@ public class CameraViewer
 		ServiceResponse response = service.callServiceAndWait(request);
 		System.out.println(response.toString());
 	}
-
-	public static void _main(String s[]) throws java.io.IOException
-	{
-		PXCMSenseManager senseMgr = PXCMSenseManager.CreateInstance();
-
-		senseMgr.EnableFace(null);
-
-		PXCMFaceModule faceModule = senseMgr.QueryFace();
-
-		// Retrieve the input requirements
-		pxcmStatus sts = pxcmStatus.PXCM_STATUS_DATA_UNAVAILABLE; 
-		PXCMFaceConfiguration faceConfig = faceModule.CreateActiveConfiguration();
-		faceConfig.SetTrackingMode(PXCMFaceConfiguration.TrackingModeType.FACE_MODE_COLOR);
-		faceConfig.detection.isEnabled = true; 
-		faceConfig.landmarks.isEnabled = true; 
-		faceConfig.pose.isEnabled = true; 
-		faceConfig.ApplyChanges();
-		faceConfig.Update();
-
-		senseMgr.Init();
-
-		System.out.println("Start");
-		PXCMFaceData faceData = faceModule.CreateOutput();
-
-		for (int nframes=0; nframes<300000; nframes++)
-		{
-			senseMgr.AcquireFrame(true);
-
-			PXCMCapture.Sample sample = senseMgr.QueryFaceSample();
-
-			//faceData = faceModule.CreateOutput();
-			faceData.Update();
-
-			// Read and print data 
-			for (int fidx=0; ; fidx++) {
-				PXCMFaceData.Face face = faceData.QueryFaceByIndex(fidx);
-				if (face==null) break;
-				PXCMFaceData.DetectionData detectData = face.QueryDetection(); 
-
-				if (detectData != null)
-				{
-					PXCMRectI32 rect = new PXCMRectI32();
-					boolean ret = detectData.QueryBoundingRect(rect);
-					if (ret) {
-						System.out.println("");
-						System.out.println ("Detection Rectangle at frame #" + nframes); 
-						System.out.println ("Top Left corner: (" + rect.x + "," + rect.y + ")" ); 
-						System.out.println ("Height: " + rect.h + " Width: " + rect.w); 
-					}
-				} else 
-					break;
-
-				PXCMFaceData.PoseData poseData = face.QueryPose();
-				if (poseData != null)
-				{
-					PXCMFaceData.PoseEulerAngles pea = new PXCMFaceData.PoseEulerAngles();
-					poseData.QueryPoseAngles(pea);
-					System.out.println ("Pose Data at frame #" + nframes); 
-					System.out.println ("(Roll, Yaw, Pitch) = (" + pea.roll + "," + pea.yaw + "," + pea.pitch + ")"); 
-				}  
-			}  
-
-			//faceData.close();
-			senseMgr.ReleaseFrame();
-		}
-		faceData.close();
-		senseMgr.Close();
-		System.exit(0);
-		System.out.println("End");
-	} 
 }
 
+/**
+ * Listener for external inputs if the program should stop
+ * @author Lucas Weidner
+ *
+ */
 class Listener extends WindowAdapter {
 	public boolean exit = false;
 	@Override public void windowClosing(WindowEvent e) {
@@ -602,8 +548,11 @@ class Listener extends WindowAdapter {
 	}
 }
 
-
-
+/**
+ * Frame to draw an image
+ * @author Lucas Weidner
+ *
+ */
 class DrawFrame extends Component { 
 	public BufferedImage image; 
 

@@ -461,6 +461,11 @@ public class CameraViewer
 		}		
 	}
 
+	/**
+	 * Creates an image object out of an array of bytes
+	 * @param imageData byte array with image data
+	 * @return bufferedimage object
+	 */
 	public static BufferedImage createImageFromBytes(byte[] imageData) {
 		ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
 		try {
@@ -502,9 +507,10 @@ public class CameraViewer
 		Message toSend = new Message(message);
 		echo.publish(toSend);
 	}
-
+	
 	/**
 	 * Subscribes to topics from ROS
+	 * It checks, if the GUI sends a command to register a face
 	 * @param topic topic to subscribe to
 	 * @param type type of the message
 	 */
@@ -515,6 +521,10 @@ public class CameraViewer
 		echoBack.subscribe(new TopicCallback() {
 			public void handleMessage(Message message) {
 				System.out.println("From ROS: " + message.toString());
+				if(message.toJsonObject().containsKey("Register"))
+				{
+					doRegister = message.toJsonObject().getBoolean("Register");						
+				}
 			}
 		});
 	}
